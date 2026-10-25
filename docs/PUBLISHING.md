@@ -16,7 +16,7 @@
 3. Lint bản Firefox (phải 0 errors):
 
    ```bash
-   npx web-ext lint --source-dir . --ignore-files scripts dist
+   npx web-ext lint --source-dir dist/firefox
    ```
 
 4. Commit, tag rồi push:
