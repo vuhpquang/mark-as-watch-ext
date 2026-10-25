@@ -78,19 +78,22 @@ Từ lần thứ hai trở đi: vào trang add-on, chọn **Upload New Version**
 ### Cách 2: dùng dòng lệnh (`web-ext sign`)
 
 1. Tạo API key ở <https://addons.mozilla.org/developers/addon/api/key/>. Bạn sẽ có *JWT issuer* và *JWT secret*.
-2. Chạy:
+2. Copy `.env.example` thành `.env`, rồi điền `AMO_JWT_ISSUER` và `AMO_JWT_SECRET`.
+3. Tăng `version` trong `manifest.json`, rồi chạy:
 
    ```bash
-   export AMO_JWT_ISSUER="user:12345:67"
-   export AMO_JWT_SECRET="..."
-   npx web-ext sign --source-dir . --ignore-files scripts dist docs \
-     --channel=unlisted \
-     --api-key="$AMO_JWT_ISSUER" --api-secret="$AMO_JWT_SECRET"
+   ./scripts/publish.sh firefox
    ```
 
-   File `.xpi` đã ký sẽ nằm trong `web-ext-artifacts/`. Đổi thành `--channel=listed` nếu muốn đưa lên AMO công khai. Lần đầu dùng listed, nên tạo trang add-on trên web trước để điền mô tả.
+   Script sẽ build, lint, rồi gọi `web-ext sign --channel listed` trên thư mục `dist/firefox/`
+   (chỉ gồm `manifest.json`, `src/`, `icons/`, nên `.env` không bao giờ bị upload).
+   Nếu chỉ muốn ký để dùng cá nhân, đổi `--channel listed` thành `unlisted` trong
+   `scripts/publish.sh`. File `.xpi` đã ký sẽ nằm trong `web-ext-artifacts/`.
 
-> Không commit API key. Thư mục `web-ext-artifacts/` đã nằm trong `.gitignore`.
+   Lần upload **đầu tiên** của một add-on listed nên làm trên web (Cách 1) để điền mô tả.
+   Script dùng cho các version sau.
+
+> Không commit `.env`. Cả `.env` và `web-ext-artifacts/` đều đã nằm trong `.gitignore`.
 
 ### Lưu ý cho Firefox
 
@@ -133,6 +136,59 @@ Từ lần thứ hai trở đi: vào trang add-on, chọn **Upload New Version**
 5. Bấm **Submit for review**. Review thường mất từ vài ngày đến vài tuần. Kết quả được gửi qua email.
 
 Từ lần thứ hai: mở item, vào tab **Package**, chọn **Upload new package**, upload zip version mới rồi **Submit for review**.
+
+### Publish bằng dòng lệnh (Chrome Web Store API)
+
+Lần đầu vẫn phải upload trên web như trên: tạo item, điền Store listing và Privacy. Sau đó các version mới có thể đẩy bằng lệnh `./scripts/publish.sh chrome`.
+Script cần 4 giá trị trong `.env`, lấy **một lần** như sau.
+
+**1. `CWS_EXTENSION_ID`**
+Mở item trong Developer Dashboard. ID là chuỗi 32 chữ cái trong URL và ở đầu trang item, ví dụ `abcdefghijklmnopabcdefghijklmnop`.
+
+**2. Bật Chrome Web Store API**
+1. Mở <https://console.cloud.google.com/>, tạo project mới, ví dụ đặt tên `cws-publish`.
+2. Vào **APIs & Services → Library**, tìm **Chrome Web Store API** rồi bấm **Enable**.
+
+**3. Màn hình đồng ý OAuth (OAuth consent screen)**
+1. Vào **APIs & Services → OAuth consent screen**. Ở giao diện mới, mục này tên là **Google Auth Platform → Branding / Audience**.
+2. User type chọn **External**. Điền App name (ví dụ `cws-publish`), support email và developer email là email của bạn.
+3. Ở mục **Audience**, bấm **Publish app** để chuyển sang *In production*. Không cần qua bước verify của Google.
+   Nếu để chế độ *Testing* thì refresh token **hết hạn sau 7 ngày**.
+
+**4. Tạo OAuth Client → `CWS_CLIENT_ID`, `CWS_CLIENT_SECRET`**
+1. Vào **APIs & Services → Credentials**, chọn **Create credentials → OAuth client ID**.
+2. Application type chọn **Web application**.
+3. Ở **Authorized redirect URIs**, thêm `https://developers.google.com/oauthplayground`.
+4. Bấm **Create**, rồi copy **Client ID** và **Client secret** vào `.env`.
+
+**5. Lấy `CWS_REFRESH_TOKEN` bằng OAuth Playground**
+1. Mở <https://developers.google.com/oauthplayground>.
+2. Bấm biểu tượng ⚙️ ở góc phải, tick **Use your own OAuth credentials**, rồi dán Client ID và Client secret.
+3. Ở ô *Input your own scopes* bên trái, nhập `https://www.googleapis.com/auth/chromewebstore`, rồi bấm **Authorize APIs**.
+4. Đăng nhập **đúng tài khoản Google sở hữu item** trên Chrome Web Store. Nếu Google cảnh báo *"Google hasn't verified this app"*, bấm **Advanced → Go to … (unsafe)**. App này là của chính bạn.
+5. Bấm **Exchange authorization code for tokens**, rồi copy **Refresh token** vào `.env`.
+
+`.env` lúc này sẽ có dạng:
+
+```bash
+AMO_JWT_ISSUER=user:12345:67
+AMO_JWT_SECRET=...
+CWS_EXTENSION_ID=abcdefghijklmnopabcdefghijklmnop
+CWS_CLIENT_ID=1234567890-xxxx.apps.googleusercontent.com
+CWS_CLIENT_SECRET=GOCSPX-...
+CWS_REFRESH_TOKEN=1//0g...
+```
+
+**6. Publish**
+
+```bash
+./scripts/publish.sh chrome     # chỉ Chrome
+./scripts/publish.sh all        # cả Firefox và Chrome
+```
+
+Script sẽ build, upload `dist/mark-as-watched-chrome-<version>.zip`, rồi submit để review.
+Sau khi qua review, Chrome tự publish. Nếu lệnh báo lỗi `invalid_grant` thì refresh token đã hết hạn
+hoặc bị thu hồi: làm lại bước 5. Nếu báo lỗi kiểu "item not in draft" hoặc version trùng thì tăng `version` trong `manifest.json`.
 
 ### Lưu ý cho Chrome
 

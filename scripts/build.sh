@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Packages the extension into dist/:
+#   dist/firefox/                         unpacked Firefox add-on (what web-ext sign uploads)
 #   dist/mark-as-watched-firefox-<v>.zip  Firefox package
 #   dist/chrome/                          unpacked Chrome extension ("Load unpacked")
 #   dist/mark-as-watched-chrome-<v>.zip   Chrome Web Store package
@@ -7,9 +8,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 version=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' manifest.json)
-rm -rf dist && mkdir -p dist/chrome
+rm -rf dist && mkdir -p dist/firefox dist/chrome
 
 files=(manifest.json src icons)
+cp -R "${files[@]}" dist/firefox/
 zip -qr "dist/mark-as-watched-firefox-$version.zip" "${files[@]}"
 
 # Chrome warns about Firefox-only keys, so drop them from its copy.
