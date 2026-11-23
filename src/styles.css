@@ -105,3 +105,82 @@ html[dark] .maw-toast {
   opacity: 1;
   transform: none;
 }
+
+/* Trash button on rows of a playlist the user can edit. Mimics yt-icon-button. */
+.maw-trash {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  margin: 0 4px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--yt-spec-text-primary, #0f0f0f);
+  background: transparent;
+}
+
+.maw-trash:hover,
+.maw-trash:focus-visible {
+  background-color: var(--yt-spec-10-percent-layer, rgba(0, 0, 0, 0.1));
+}
+
+
+.maw-trash:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.maw-trash .maw-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.maw-removed {
+  display: none !important;
+}
+
+/* Blue bar on the left edge of thumbnails of videos that are in Watch later. */
+.maw-wl-bar {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 5px;
+  border-radius: 3px;
+  background: #3ea6ff;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.maw-wl .maw-wl-bar {
+  display: block;
+}
+
+/* Dark mode. The --yt-spec-* variables are not defined everywhere (e.g. the newer
+   yt-list-view-model menus and playlist rows), so don't rely on them for contrast. */
+html[dark] .maw-menu-item,
+html[dark] #maw-watch-btn,
+html[dark] .maw-trash {
+  color: #f1f1f1;
+}
+
+html[dark] .maw-menu-item:hover,
+html[dark] .maw-menu-item:focus-visible,
+html[dark] .maw-trash:hover,
+html[dark] .maw-trash:focus-visible {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+html[dark] #maw-watch-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+html[dark] #maw-watch-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}

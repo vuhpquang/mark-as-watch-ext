@@ -3,6 +3,21 @@
 Firefox add-on + Chrome extension (one MV3 codebase) that adds **Mark as watched** to YouTube:
 an item in the video ⋮ menu and a button under the player. Clicking records the video as 100%
 watched in the user's YouTube history. Firefox is the primary target.
+It also adds a trash button to rows of playlists the user owns, a blue bar on thumbnails of
+videos in Watch later (WL), and "Remove from Watch later" in the ⋮ menu of those videos.
+
+## Playlists and Watch later (`src/content.js`, sections 3 and 4)
+
+- Writes use `/youtubei/v1/browse/edit_playlist` via `innertube()`: SAPISIDHASH + cookies are
+  enough here (no PoToken). WL removal uses `ACTION_REMOVE_VIDEO_BY_VIDEO_ID` + `removedVideoId`.
+- Trash button: shown only if the row's renderer data (`el.data`) has a `playlistEditEndpoint`
+  with a remove action in its ⋮ menu, i.e. the playlist is editable. That endpoint is sent as is.
+  Removed rows are hidden (`.maw-removed`) and keyed by `setVideoId`, since Polymer recycles rows.
+- WL membership: the whole WL list is loaded via `browse` `VLWL` + continuations into
+  `watchLater.ids`, refreshed every 5 min on navigation/focus. It is updated locally on our own
+  removals and on clicks of the native "Save to Watch later" item, and reloaded 2 s after
+  clicks on other WL toggles (thumbnail hover button, Save dialog). Blue bars are skipped on
+  `list=WL` pages.
 
 ## Layout
 

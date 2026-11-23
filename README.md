@@ -7,6 +7,14 @@ Firefox add-on and Chrome extension that adds **Mark as watched** to YouTube:
 
 Clicking it records the video in your watch history as **100% watched** (full red bar on the thumbnail).
 
+It also helps with playlists and Watch later:
+
+3. A **trash button** on every row of a playlist you own (including Watch later) removes the
+   video in one click.
+4. Videos that are in your **Watch later** get a **blue bar** on the left edge of their thumbnail.
+5. For those videos the **⋮ menu** gets **Remove from Watch later**, right under
+   "Save to Watch later".
+
 Latest release: [v1.0.0](https://github.com/vuhpquang/mark-as-watch-ext/releases/latest).
 It needs Firefox 128+ or Chrome 111+ (or another Chromium browser: Edge, Brave, Arc, …).
 
