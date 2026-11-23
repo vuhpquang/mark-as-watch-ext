@@ -15,6 +15,21 @@ It also helps with playlists and Watch later:
 5. For those videos the **⋮ menu** gets **Remove from Watch later**, right under
    "Save to Watch later".
 
+Removals show an **Undo** button in the toast; undoing puts a playlist video back where it was.
+
+And a few shortcuts (each can be turned off in the settings):
+
+6. **Dim or hide watched videos** on Home, Subscriptions, Search, the recommendations next to a
+   video and channel pages, with an opacity slider and a "watched from X %" threshold.
+7. **Keyboard:** <kbd>Shift</kbd>+<kbd>W</kbd> marks as watched, <kbd>Shift</kbd>+<kbd>L</kbd>
+   saves to / removes from Watch later. They act on the video under the mouse, or else on the
+   video playing on the watch page.
+8. **Shift+click** video cards to select several, then mark them as watched, save to or remove
+   from Watch later, or remove them from your playlist, from a toolbar at the bottom. Esc clears.
+
+**Settings:** click the extension's toolbar button, or open its Preferences / Options in
+`about:addons` (Firefox) or `chrome://extensions` (Chrome).
+
 Latest release: [v1.1.1](https://github.com/vuhpquang/mark-as-watch-ext/releases/latest).
 It needs Firefox 128+ or Chrome 111+ (or another Chromium browser: Edge, Brave, Arc, …).
 

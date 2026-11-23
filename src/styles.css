@@ -184,3 +184,120 @@ html[dark] #maw-watch-btn {
 html[dark] #maw-watch-btn:hover {
   background-color: rgba(255, 255, 255, 0.2);
 }
+
+/* Toast with an action button (Undo). */
+.maw-toast {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.maw-toast-action {
+  flex: none;
+  padding: 6px 10px;
+  margin: -6px -8px -6px 0;
+  border: none;
+  border-radius: 16px;
+  background: transparent;
+  color: #3ea6ff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+html[dark] .maw-toast-action {
+  color: #065fd4;
+}
+
+.maw-toast-action:hover {
+  background: rgba(128, 128, 128, 0.2);
+}
+
+/* Watched videos in feeds (opacity comes from the settings page). */
+.maw-dim {
+  opacity: var(--maw-dim-opacity, 0.4);
+  transition: opacity 0.15s;
+}
+
+.maw-dim:hover,
+.maw-dim:focus-within {
+  opacity: 1;
+}
+
+.maw-hidden {
+  display: none !important;
+}
+
+/* Shift+click multi-select. */
+.maw-selected {
+  outline: 3px solid #3ea6ff;
+  outline-offset: 2px;
+  border-radius: 12px;
+  background-color: rgba(62, 166, 255, 0.12);
+}
+
+.maw-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100vw - 32px);
+  padding: 6px 8px 6px 18px;
+  border-radius: 28px;
+  transform: translateX(-50%);
+  font-family: "Roboto", "Arial", sans-serif;
+  font-size: 14px;
+  color: #fff;
+  background: #0f0f0f;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  overflow-x: auto;
+}
+
+html[dark] .maw-bar {
+  color: #0f0f0f;
+  background: #f1f1f1;
+}
+
+.maw-bar-count {
+  margin-right: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.maw-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 36px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 18px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.maw-bar button:hover:not(:disabled) {
+  background: rgba(128, 128, 128, 0.25);
+}
+
+.maw-bar button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.maw-bar .maw-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.maw-bar-clear {
+  opacity: 0.8;
+}

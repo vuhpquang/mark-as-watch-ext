@@ -1,0 +1,311 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mark as Watched for YouTube</title>
+    <link rel="icon" href="../icons/icon-32.png" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f9f9f9;
+        --card: #fff;
+        --text: #0f0f0f;
+        --muted: #606060;
+        --border: #e5e5e5;
+        --ok: #188038;
+        --warn: #d93025;
+        --accent: #065fd4;
+        --accent-text: #fff;
+        --kbd: #f2f2f2;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f0f0f;
+          --card: #212121;
+          --text: #f1f1f1;
+          --muted: #aaa;
+          --border: #3f3f3f;
+          --ok: #81c995;
+          --warn: #f28b82;
+          --accent: #3ea6ff;
+          --accent-text: #0f0f0f;
+          --kbd: #3a3a3a;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 40px 16px 64px;
+        background: var(--bg);
+        color: var(--text);
+        font: 15px/1.5 Roboto, Arial, sans-serif;
+      }
+      main {
+        max-width: 640px;
+        margin: 0 auto;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 24px;
+      }
+      header img {
+        width: 44px;
+        height: 44px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 22px;
+      }
+      section {
+        margin-bottom: 16px;
+        padding: 20px 24px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+      }
+      h2 {
+        margin: 0 0 12px;
+        font-size: 16px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0;
+      }
+      .row label {
+        flex: 1;
+      }
+      .row input[type="checkbox"],
+      .row input[type="radio"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--accent);
+      }
+      .sub {
+        margin-left: 30px;
+      }
+      .sub.disabled {
+        opacity: 0.45;
+        pointer-events: none;
+      }
+      input[type="range"] {
+        flex: 1;
+        accent-color: var(--accent);
+      }
+      .value {
+        min-width: 48px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .pages {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 20px;
+      }
+      .pages label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .preview {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin: 4px 0 8px;
+      }
+      .thumb {
+        position: relative;
+        width: 120px;
+        height: 68px;
+        flex: none;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #5b7cfa, #c86dd7);
+        overflow: hidden;
+      }
+      .thumb::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 4px;
+        background: #f03;
+      }
+      .preview .lines {
+        flex: 1;
+      }
+      .preview .lines div {
+        height: 10px;
+        margin: 6px 0;
+        border-radius: 5px;
+        background: var(--border);
+      }
+      .preview .lines div:last-child {
+        width: 60%;
+      }
+      .dimmed {
+        transition: opacity 0.15s;
+      }
+      kbd {
+        display: inline-block;
+        min-width: 22px;
+        padding: 1px 7px;
+        border: 1px solid var(--border);
+        border-bottom-width: 2px;
+        border-radius: 6px;
+        background: var(--kbd);
+        font: 13px/1.5 ui-monospace, Menlo, monospace;
+        text-align: center;
+      }
+      ul.keys {
+        margin: 4px 0 0;
+        padding-left: 0;
+        list-style: none;
+      }
+      ul.keys li {
+        padding: 4px 0;
+      }
+      #status {
+        font-weight: 600;
+      }
+      #status.ok {
+        color: var(--ok);
+      }
+      #status.missing {
+        color: var(--warn);
+      }
+      button {
+        padding: 9px 18px;
+        border: none;
+        border-radius: 18px;
+        background: var(--accent);
+        color: var(--accent-text);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button[hidden] {
+        display: none;
+      }
+      footer {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <img src="../icons/icon-128.png" alt="" />
+        <h1>Mark as Watched for YouTube</h1>
+      </header>
+
+      <section id="access">
+        <p id="status"></p>
+        <p id="detail" class="muted"></p>
+        <button id="grant" type="button" hidden></button>
+        <button id="reload" type="button" hidden></button>
+        <p id="result" class="muted"></p>
+      </section>
+
+      <section>
+        <h2 data-t="watchedTitle"></h2>
+        <div class="row">
+          <input id="dimWatched" type="checkbox" data-setting="dimWatched" />
+          <label for="dimWatched" data-t="dimWatched"></label>
+        </div>
+        <div class="sub" data-needs="dimWatched">
+          <div class="row">
+            <input id="modeDim" type="radio" name="dimMode" value="dim" data-setting="dimMode" />
+            <label for="modeDim" data-t="modeDim"></label>
+          </div>
+          <div class="row">
+            <input id="modeHide" type="radio" name="dimMode" value="hide" data-setting="dimMode" />
+            <label for="modeHide" data-t="modeHide"></label>
+          </div>
+          <div class="sub" data-needs-mode="dim">
+            <div class="row">
+              <label for="dimOpacity" data-t="opacity"></label>
+            </div>
+            <div class="row">
+              <input id="dimOpacity" type="range" min="5" max="90" step="5" data-setting="dimOpacity" />
+              <span class="value" data-value="dimOpacity" data-unit="%"></span>
+            </div>
+            <div class="preview">
+              <div class="thumb dimmed"></div>
+              <div class="lines dimmed"><div></div><div></div></div>
+            </div>
+            <p class="muted" data-t="hoverHint"></p>
+          </div>
+          <div class="row">
+            <label for="dimThreshold" data-t="threshold"></label>
+          </div>
+          <div class="row">
+            <input id="dimThreshold" type="range" min="50" max="100" step="5" data-setting="dimThreshold" />
+            <span class="value" data-value="dimThreshold" data-unit="%"></span>
+          </div>
+          <p data-t="pagesTitle"></p>
+          <div class="pages">
+            <label><input type="checkbox" data-setting="dimPages.home" /><span data-t="pageHome"></span></label>
+            <label
+              ><input type="checkbox" data-setting="dimPages.subscriptions" /><span data-t="pageSubscriptions"></span
+            ></label>
+            <label><input type="checkbox" data-setting="dimPages.search" /><span data-t="pageSearch"></span></label>
+            <label><input type="checkbox" data-setting="dimPages.watch" /><span data-t="pageWatch"></span></label>
+            <label><input type="checkbox" data-setting="dimPages.channel" /><span data-t="pageChannel"></span></label>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 data-t="wlTitle"></h2>
+        <div class="row">
+          <input id="wlBar" type="checkbox" data-setting="wlBar" />
+          <label for="wlBar" data-t="wlBar"></label>
+        </div>
+      </section>
+
+      <section>
+        <h2 data-t="shortcutsTitle"></h2>
+        <div class="row">
+          <input id="shortcuts" type="checkbox" data-setting="shortcuts" />
+          <label for="shortcuts" data-t="shortcuts"></label>
+        </div>
+        <div class="sub" data-needs="shortcuts">
+          <ul class="keys">
+            <li><kbd>Shift</kbd> + <kbd>W</kbd> &nbsp;<span data-t="keyW"></span></li>
+            <li><kbd>Shift</kbd> + <kbd>L</kbd> &nbsp;<span data-t="keyL"></span></li>
+          </ul>
+          <p class="muted" data-t="keysHint"></p>
+        </div>
+      </section>
+
+      <section>
+        <h2 data-t="selectTitle"></h2>
+        <div class="row">
+          <input id="multiSelect" type="checkbox" data-setting="multiSelect" />
+          <label for="multiSelect" data-t="multiSelect"></label>
+        </div>
+        <div class="sub" data-needs="multiSelect">
+          <p class="muted" data-t="selectHint"></p>
+        </div>
+      </section>
+
+      <footer class="muted"><span data-t="autosave"></span> · v<span id="version"></span></footer>
+    </main>
+    <script src="settings.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>
