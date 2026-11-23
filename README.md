@@ -18,6 +18,10 @@ It also helps with playlists and Watch later:
 Latest release: [v1.1.0](https://github.com/vuhpquang/mark-as-watch-ext/releases/latest).
 It needs Firefox 128+ or Chrome 111+ (or another Chromium browser: Edge, Brave, Arc, …).
 
+The only permission is access to `www.youtube.com`. Your browser lets you withhold it, and then
+the extension does nothing. If that happens, the toolbar button shows a red **!**: click it and
+choose **Allow**, then reload your YouTube tabs.
+
 ## How it works
 
 `src/content.js` runs in the page (MAIN world) on `www.youtube.com`:

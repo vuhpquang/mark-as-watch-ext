@@ -20,6 +20,8 @@ node -e '
   const m = JSON.parse(require("fs").readFileSync("manifest.json", "utf8"));
   delete m.browser_specific_settings;
   m.minimum_chrome_version = "111"; // content_scripts "world": "MAIN"
+  // Firefox runs MV3 background scripts as an event page; Chrome needs a service worker.
+  if (m.background?.scripts) m.background = { service_worker: m.background.scripts[0] };
   require("fs").writeFileSync("dist/chrome/manifest.json", JSON.stringify(m, null, 2) + "\n");
 '
 (cd dist/chrome && zip -qr "../mark-as-watched-chrome-$version.zip" .)
