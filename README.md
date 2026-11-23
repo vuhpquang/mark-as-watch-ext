@@ -15,7 +15,7 @@ It also helps with playlists and Watch later:
 5. For those videos the **⋮ menu** gets **Remove from Watch later**, right under
    "Save to Watch later".
 
-Latest release: [v1.1.0](https://github.com/vuhpquang/mark-as-watch-ext/releases/latest).
+Latest release: [v1.1.1](https://github.com/vuhpquang/mark-as-watch-ext/releases/latest).
 It needs Firefox 128+ or Chrome 111+ (or another Chromium browser: Edge, Brave, Arc, …).
 
 The only permission is access to `www.youtube.com`. Your browser lets you withhold it, and then
