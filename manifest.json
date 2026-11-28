@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Mark as Watched for YouTube",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Adds a \"Mark as watched\" option to YouTube video menus and under the player, recording the video as 100% watched in your history.",
   "icons": {
     "16": "icons/icon-16.png",

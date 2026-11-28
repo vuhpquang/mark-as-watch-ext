@@ -35,7 +35,7 @@ And a few shortcuts (each can be turned off in the settings):
 **Settings:** click the extension's toolbar button, or open its Preferences / Options in
 `about:addons` (Firefox) or `chrome://extensions` (Chrome).
 
-Latest release: [v1.2.0](https://github.com/vuhpquang/mark-as-watch-ext/releases/latest).
+Latest release: [v1.3.0](https://github.com/vuhpquang/mark-as-watch-ext/releases/latest).
 It needs Firefox 128+ or Chrome 111+ (or another Chromium browser: Edge, Brave, Arc, …).
 
 The only permission is access to `www.youtube.com`. Your browser lets you withhold it, and then
