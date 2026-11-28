@@ -36,7 +36,7 @@ And a few shortcuts (each can be turned off in the settings):
 `about:addons` (Firefox) or `chrome://extensions` (Chrome).
 
 Latest release: [v1.3.0](https://github.com/vuhpquang/mark-as-watch-ext/releases/latest).
-It needs Firefox 128+ or Chrome 111+ (or another Chromium browser: Edge, Brave, Arc, …).
+It needs Firefox 140+ or Chrome 111+ (or another Chromium browser: Edge, Brave, Arc, …).
 
 The only permission is access to `www.youtube.com`. Your browser lets you withhold it, and then
 the extension does nothing. If that happens, the toolbar button shows a red **!**: click it and
@@ -62,7 +62,7 @@ report the real position and overwrite the "watched" state.
 
 ## Install
 
-### Firefox (128+)
+### Firefox (140+)
 
 From a release: download `mark-as-watched-firefox-<version>.zip` from
 [Releases](https://github.com/vuhpquang/mark-as-watch-ext/releases), or install from AMO once it is

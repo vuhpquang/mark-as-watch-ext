@@ -122,7 +122,8 @@ npx web-ext run --source-dir . --url https://www.youtube.com   # run in Firefox
 - **Trusted Types**: YouTube enforces them, so `innerHTML` throws. Build DOM with
   `createElement` / `createElementNS`.
 - **MAIN world** is required for `ytcfg`, the player API and same-origin cookies. That needs
-  Firefox 128+ and Chrome 111+. `browser.*` / `chrome.*` APIs are not available there.
+  Firefox 128+ and Chrome 111+ (the manifest asks for Firefox 140+ / Android 142+, which
+  `data_collection_permissions` needs). `browser.*` / `chrome.*` APIs are not available there.
 - The ⋮ popup is a single reused `ytd-popup-container` dropdown, filled asynchronously.
   The script remembers the last clicked card (`targetFromClick`) and polls (`watchMenu`)
   to inject or remove `.maw-menu-item`. It supports both the old

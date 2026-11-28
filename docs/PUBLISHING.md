@@ -99,7 +99,7 @@ Từ lần thứ hai trở đi: vào trang add-on, chọn **Upload New Version**
 
 - `browser_specific_settings.gecko.id` (`mark-as-watched@quangvu`) là ID cố định của add-on trên AMO. **Không được đổi** sau lần upload đầu, nếu không AMO sẽ coi đây là một add-on khác.
 - `data_collection_permissions: { required: ["none"] }` đã khai báo sẵn là không thu thập dữ liệu. AMO bắt buộc khai báo này với add-on mới.
-- `strict_min_version: 128.0`: cần Firefox 128 trở lên vì add-on dùng `world: "MAIN"`.
+- `strict_min_version: 140.0` (Android: `gecko_android` 142.0): `world: "MAIN"` chỉ cần Firefox 128, nhưng `data_collection_permissions` cần Firefox 140 (Android 142). Đặt thấp hơn thì AMO báo 2 warning "Manifest key not supported by the specified minimum Firefox version".
 
 ---
 
