@@ -26,6 +26,11 @@ And a few shortcuts (each can be turned off in the settings):
    video playing on the watch page.
 8. **Shift+click** video cards to select several, then mark them as watched, save to or remove
    from Watch later, or remove them from your playlist, from a toolbar at the bottom. Esc clears.
+9. **Playlist autoplay control:** a ⏭ button next to Loop / Shuffle in the playlist panel stops
+   the playlist from jumping to the next video (YouTube's own Autoplay switch doesn't cover
+   playlists). Click it to turn autoplay on/off, or ▾ to pick a mode: **Stop after this video**,
+   **Off for this playlist** (remembered) or **Always off**. <kbd>Shift</kbd>+<kbd>A</kbd> does
+   the same as clicking it.
 
 **Settings:** click the extension's toolbar button, or open its Preferences / Options in
 `about:addons` (Firefox) or `chrome://extensions` (Chrome).
@@ -48,7 +53,9 @@ choose **Allow**, then reload your YouTube tabs.
 - It sends the same stats pings the YouTube player sends: `api/stats/playback` (start) and
   `api/stats/watchtime` with `st=0`, `et=cmt=len`, `final=1`, i.e. "watched from 0 to the end".
 
-No data goes anywhere except youtube.com, and nothing is collected or stored. You must be signed in to YouTube.
+No data goes anywhere except youtube.com, and nothing is collected. Only your settings are stored
+in the browser's extension storage (synced), and the IDs and titles of playlists where you turned
+autoplay off (this device only). You must be signed in to YouTube.
 
 On the watch page the video is paused first. If it kept playing, the player's own pings would
 report the real position and overwrite the "watched" state.

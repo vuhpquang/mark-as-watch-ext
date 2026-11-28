@@ -200,6 +200,39 @@
       button[hidden] {
         display: none;
       }
+      ul.playlists {
+        margin: 0 0 4px;
+        padding: 0;
+        list-style: none;
+      }
+      ul.playlists li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 6px 0;
+        border-top: 1px solid var(--border);
+      }
+      ul.playlists li:last-child {
+        border-bottom: 1px solid var(--border);
+      }
+      ul.playlists a {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        color: inherit;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      ul.playlists button {
+        padding: 4px 12px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        font-weight: 500;
+      }
+      #apEmpty[hidden] {
+        display: none;
+      }
       footer {
         text-align: center;
       }
@@ -278,6 +311,18 @@
       </section>
 
       <section>
+        <h2 data-t="apTitle"></h2>
+        <p class="muted" data-t="apIntro"></p>
+        <div class="row">
+          <input id="autoplayAlways" type="checkbox" data-setting="autoplayAlways" />
+          <label for="autoplayAlways" data-t="apAlways"></label>
+        </div>
+        <p data-t="apListTitle"></p>
+        <ul id="apList" class="playlists"></ul>
+        <p id="apEmpty" class="muted" data-t="apEmpty"></p>
+      </section>
+
+      <section>
         <h2 data-t="shortcutsTitle"></h2>
         <div class="row">
           <input id="shortcuts" type="checkbox" data-setting="shortcuts" />
@@ -287,6 +332,7 @@
           <ul class="keys">
             <li><kbd>Shift</kbd> + <kbd>W</kbd> &nbsp;<span data-t="keyW"></span></li>
             <li><kbd>Shift</kbd> + <kbd>L</kbd> &nbsp;<span data-t="keyL"></span></li>
+            <li><kbd>Shift</kbd> + <kbd>A</kbd> &nbsp;<span data-t="keyA"></span></li>
           </ul>
           <p class="muted" data-t="keysHint"></p>
         </div>

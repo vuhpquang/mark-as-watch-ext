@@ -5,8 +5,8 @@ an item in the video ⋮ menu and a button under the player. Clicking records th
 watched in the user's YouTube history. Firefox is the primary target.
 It also adds a trash button to rows of playlists the user owns, a blue bar on thumbnails of
 videos in Watch later (WL), "Remove from Watch later" in the ⋮ menu of those videos, Undo for
-removals, dimming/hiding of watched videos, Shift+W / Shift+L shortcuts, Shift+click
-multi-select with a bottom toolbar, and a settings page.
+removals, dimming/hiding of watched videos, Shift+W / Shift+L / Shift+A shortcuts, Shift+click
+multi-select with a bottom toolbar, playlist autoplay control, and a settings page.
 
 ## Playlists and Watch later (`src/content.js`, sections 3 and 4)
 
@@ -38,6 +38,24 @@ multi-select with a bottom toolbar, and a settings page.
   plus Shift+mousedown is prevented so it doesn't start a text selection. Selection is keyed by
   video ID, since cards get recycled.
 
+## Playlist autoplay (`src/content.js`, section 8)
+
+- `<yt-playlist-manager>` (hidden, in `ytd-app`; was `ytd-playlist-manager`) advances on player
+  state `0` only while `canAutoAdvance_` is true; the instance is `el.inst` (new component
+  framework), falling back to `el.polymerController` / `el`. YouTube sets it to true on every
+  `yt-navigate-finish`, so while off we set it to false on each tick, after navigation, on
+  `timeupdate` in the last 2 s and on `ended` (capture phase, before the player reports the end).
+  We restore `true` only if we set it false (YouTube's "End of video" sleep timer uses it too).
+  If the manager isn't found, fallback: pause the video 0.35 s before the end.
+- Modes: `on`, `video` (page-only `stopAfterVideoId`, cleared when another video plays),
+  `playlist` (`autoplayOffPlaylists` in **`storage.local`**, `[{id, title}]`, max 300: sync's
+  8 KB per-item quota is too small; the bridge adds it to the published JSON), `always`
+  (`settings.autoplayAlways`). The icon half of the split button and Shift+A switch between
+  `on` and `settings.autoplayLastOff`. Picking a mode clears the others for that playlist.
+- The split button `.maw-ap` sits in `ytd-playlist-panel-renderer #start-actions` after
+  `#playlist-action-menu`; it stops click/tap propagation because the panel header collapses on
+  tap. The menu `.maw-ap-menu` is `position: fixed` in `body`.
+
 ## Settings
 
 - `src/settings.js`: defaults + load/save in `storage.sync`, shared by the options page and the
@@ -49,6 +67,12 @@ multi-select with a bottom toolbar, and a settings page.
   whether the YouTube host permission is granted, with Allow / "Reload YouTube tabs" buttons.
   Changes are saved on input (debounced 250 ms because of `storage.sync` quotas) and reach open
   YouTube tabs live through `storage.onChanged`.
+- The other way (autoplay modes picked on the page): `content.js` `saveSettings(op)` writes a JSON
+  operation (`{settings?, addPlaylist?, removePlaylist?}`) to `<html data-maw-settings-patch>` and
+  fires `maw-save-settings`. The bridge applies it to what is stored now (one at a time; a failed
+  read aborts the write, never save defaults), publishes, then answers `maw-saved` /
+  `maw-save-failed`. While writes are pending, `readSettings()` keeps the local autoplay keys so an
+  older echo doesn't undo a newer click.
 
 ## Layout
 

@@ -9,7 +9,13 @@ const MAW_DEFAULTS = {
   wlBar: true, // blue bar on videos in Watch later
   shortcuts: true, // Shift+W, Shift+L
   multiSelect: true, // Shift+click to select videos
+  autoplayAlways: false, // never auto-advance in playlists
+  autoplayLastOff: "playlist", // off mode the quick toggle uses: "video" | "playlist" | "always"
 };
+
+// Playlists with auto-advance off: [{ id, title }], newest first. Kept in storage.local,
+// since storage.sync allows only 8 KB per item.
+const MAW_PLAYLISTS_MAX = 300;
 
 const mawApi = globalThis.browser ?? globalThis.chrome;
 
@@ -29,4 +35,17 @@ async function mawLoad() {
 
 function mawSave(settings) {
   return mawApi.storage.sync.set({ settings });
+}
+
+async function mawLoadPlaylists() {
+  try {
+    const { autoplayOffPlaylists } = await mawApi.storage.local.get("autoplayOffPlaylists");
+    return Array.isArray(autoplayOffPlaylists) ? autoplayOffPlaylists : [];
+  } catch {
+    return [];
+  }
+}
+
+function mawSavePlaylists(list) {
+  return mawApi.storage.local.set({ autoplayOffPlaylists: list.slice(0, MAW_PLAYLISTS_MAX) });
 }

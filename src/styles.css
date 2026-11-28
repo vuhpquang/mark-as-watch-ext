@@ -301,3 +301,157 @@ html[dark] .maw-bar {
 .maw-bar-clear {
   opacity: 0.8;
 }
+
+/* Playlist autoplay: split button next to Loop / Shuffle in the playlist panel.
+   Left half toggles, right half (▾) opens the mode menu. Blue with a slash = off. */
+.maw-ap {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  height: 40px;
+  margin-left: 4px;
+  border-radius: 20px;
+  color: var(--yt-spec-text-primary, #0f0f0f);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+html[dark] .maw-ap {
+  color: #f1f1f1;
+}
+
+.maw-ap.maw-ap-off {
+  color: #065fd4;
+  background-color: rgba(6, 95, 212, 0.1);
+}
+
+html[dark] .maw-ap.maw-ap-off {
+  color: #3ea6ff;
+  background-color: rgba(62, 166, 255, 0.15);
+}
+
+.maw-ap button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.maw-ap-toggle {
+  width: 40px;
+  border-radius: 20px 0 0 20px;
+}
+
+.maw-ap-more {
+  width: 22px;
+  margin-left: -2px;
+  border-radius: 0 20px 20px 0;
+}
+
+.maw-ap button:hover,
+.maw-ap button:focus-visible {
+  background-color: rgba(128, 128, 128, 0.2);
+}
+
+.maw-ap-toggle .maw-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.maw-ap-more .maw-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* The mode menu. Mimics YouTube's popup menus (tp-yt-iron-dropdown). */
+.maw-ap-menu {
+  position: fixed;
+  z-index: 10002;
+  min-width: 260px;
+  padding: 8px 0;
+  border-radius: 12px;
+  font-family: "Roboto", "Arial", sans-serif;
+  color: #0f0f0f;
+  background: #fff;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.2);
+}
+
+html[dark] .maw-ap-menu {
+  color: #f1f1f1;
+  background: #282828;
+}
+
+.maw-ap-menu-title {
+  padding: 6px 16px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.maw-ap-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 20px 8px 12px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+}
+
+.maw-ap-item:hover,
+.maw-ap-item:focus-visible {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+html[dark] .maw-ap-item:hover,
+html[dark] .maw-ap-item:focus-visible {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.maw-ap-check {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  visibility: hidden;
+}
+
+.maw-ap-checked .maw-ap-check {
+  visibility: visible;
+}
+
+.maw-ap-check .maw-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.maw-ap-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.maw-ap-label {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.maw-ap-checked .maw-ap-label {
+  font-weight: 500;
+}
+
+.maw-ap-hint {
+  font-size: 12px;
+  line-height: 16px;
+  opacity: 0.65;
+}

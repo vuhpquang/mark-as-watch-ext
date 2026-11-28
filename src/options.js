@@ -30,10 +30,18 @@ const T = VI
       pageChannel: "Trang kênh",
       wlTitle: "Xem sau",
       wlBar: "Hiện thanh xanh trên thumbnail của video có trong Xem sau",
+      apTitle: "Tự chuyển video trong playlist",
+      apIntro:
+        "Nút ⏭ cạnh nút lặp và trộn bài trong khung playlist: bấm để bật/tắt, bấm ▾ để chọn chế độ (dừng sau video này, tắt cho playlist này, luôn tắt).",
+      apAlways: "Luôn tắt: không bao giờ tự chuyển sang video tiếp theo trong playlist",
+      apListTitle: "Playlist đã tắt tự chuyển:",
+      apEmpty: "Chưa có playlist nào.",
+      apRemove: "Bỏ",
       shortcutsTitle: "Phím tắt",
       shortcuts: "Bật phím tắt",
       keyW: "Đánh dấu đã xem",
       keyL: "Lưu vào / xóa khỏi Xem sau",
+      keyA: "Bật / tắt tự chuyển video trong playlist đang xem",
       keysHint:
         "Áp dụng cho video đang rê chuột vào. Nếu không rê vào video nào, trên trang xem video thì áp dụng cho video đang mở.",
       selectTitle: "Chọn nhiều video",
@@ -67,10 +75,18 @@ const T = VI
       pageChannel: "Channel pages",
       wlTitle: "Watch later",
       wlBar: "Show a blue bar on thumbnails of videos in Watch later",
+      apTitle: "Autoplay in playlists",
+      apIntro:
+        "The ⏭ button next to Loop and Shuffle in the playlist panel: click to turn autoplay on/off, click ▾ to pick a mode (stop after this video, off for this playlist, always off).",
+      apAlways: "Always off: never go to the next video of a playlist by itself",
+      apListTitle: "Playlists with autoplay off:",
+      apEmpty: "None yet.",
+      apRemove: "Remove",
       shortcutsTitle: "Keyboard shortcuts",
       shortcuts: "Enable keyboard shortcuts",
       keyW: "Mark as watched",
       keyL: "Save to / remove from Watch later",
+      keyA: "Turn autoplay on / off in the playlist you are watching",
       keysHint: "They act on the video under the mouse, or else, on the watch page, on the video that is playing.",
       selectTitle: "Select several videos",
       multiSelect: "Shift+click videos to select several",
@@ -81,6 +97,7 @@ const T = VI
 
 const $ = (id) => document.getElementById(id);
 let settings = mawMerge();
+let playlists = []; // autoplay off, from storage.local
 
 // ----------------------------------------------------------- access status
 
@@ -144,6 +161,29 @@ function renderSettings() {
   for (const el of document.querySelectorAll(".dimmed")) el.style.opacity = String(settings.dimOpacity / 100);
 }
 
+function renderPlaylists() {
+  $("apEmpty").hidden = playlists.length > 0;
+  $("apList").replaceChildren(
+    ...playlists.map((playlist) => {
+      const li = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = `https://www.youtube.com/playlist?list=${encodeURIComponent(playlist.id)}`;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = playlist.title || playlist.id;
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = T.apRemove;
+      remove.addEventListener("click", async () => {
+        const list = await mawLoadPlaylists();
+        await mawSavePlaylists(list.filter((p) => p.id !== playlist.id));
+      });
+      li.append(link, remove);
+      return li;
+    }),
+  );
+}
+
 let saveTimer = 0;
 function save() {
   clearTimeout(saveTimer);
@@ -166,6 +206,10 @@ document.addEventListener("input", (event) => {
 
 // Another settings tab (or sync) changed them.
 mawApi.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.autoplayOffPlaylists) {
+    playlists = Array.isArray(changes.autoplayOffPlaylists.newValue) ? changes.autoplayOffPlaylists.newValue : [];
+    renderPlaylists();
+  }
   if (area !== "sync" || !changes.settings) return;
   settings = mawMerge(changes.settings.newValue);
   renderSettings();
@@ -183,4 +227,8 @@ renderAccess();
 mawLoad().then((loaded) => {
   settings = loaded;
   renderSettings();
+});
+mawLoadPlaylists().then((loaded) => {
+  playlists = loaded;
+  renderPlaylists();
 });

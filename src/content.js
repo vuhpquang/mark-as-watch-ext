@@ -35,6 +35,20 @@
         working: (i, n) => `Đang xử lý ${i}/${n}…`,
         saveWL: "Lưu vào Xem sau",
         clearSelection: "Bỏ chọn (Esc)",
+        apTitle: "Tự chuyển video tiếp theo",
+        apOn: "Bật",
+        apOnHint: "Mặc định của YouTube",
+        apVideo: "Dừng sau video này",
+        apVideoHint: "Sang video khác thì tự chuyển như thường",
+        apPlaylist: "Tắt cho playlist này",
+        apPlaylistHint: "Ghi nhớ cho riêng playlist này",
+        apAlways: "Luôn tắt",
+        apAlwaysHint: "Áp dụng cho mọi playlist",
+        apTip: (label) => `Tự chuyển video tiếp theo: ${label}`,
+        apMore: "Chọn chế độ tự chuyển",
+        apStopped: "Đã dừng, không tự chuyển sang video tiếp theo",
+        apPlayNext: "Phát tiếp",
+        apSaveFailed: "Không lưu được chế độ tự chuyển",
       }
     : {
         mark: "Mark as watched",
@@ -62,6 +76,20 @@
         working: (i, n) => `Working ${i}/${n}…`,
         saveWL: "Save to Watch later",
         clearSelection: "Clear (Esc)",
+        apTitle: "Autoplay next video",
+        apOn: "On",
+        apOnHint: "YouTube's default",
+        apVideo: "Stop after this video",
+        apVideoHint: "Other videos advance as usual",
+        apPlaylist: "Off for this playlist",
+        apPlaylistHint: "Remembered for this playlist",
+        apAlways: "Always off",
+        apAlwaysHint: "Every playlist",
+        apTip: (label) => `Autoplay next video: ${label}`,
+        apMore: "Choose autoplay mode",
+        apStopped: "Stopped before the next video",
+        apPlayNext: "Play next",
+        apSaveFailed: "Could not save the autoplay mode",
       };
 
   // --------------------------------------------------------------- settings
@@ -78,17 +106,55 @@
     wlBar: true,
     shortcuts: true,
     multiSelect: true,
+    autoplayAlways: false,
+    autoplayLastOff: "playlist",
+    // Not a sync setting: kept in storage.local (sync's 8 KB per-item quota is too
+    // small for it) and added to the published JSON by the bridge.
+    autoplayOffPlaylists: [], // [{ id, title }], newest first
   };
 
+  const AP_KEYS = ["autoplayAlways", "autoplayLastOff", "autoplayOffPlaylists"];
+  let apPending = 0; // our writes the bridge hasn't confirmed yet
+
   function readSettings() {
+    // While our own writes are in flight, an echo of an older one must not
+    // overwrite the autoplay state the user just picked.
+    const keep = apPending ? Object.fromEntries(AP_KEYS.map((k) => [k, settings[k]])) : null;
     try {
       const stored = JSON.parse(document.documentElement.dataset.mawSettings || "{}");
       Object.assign(settings, stored, { dimPages: { ...settings.dimPages, ...stored.dimPages } });
     } catch {}
+    if (keep) Object.assign(settings, keep);
     document.documentElement.style.setProperty("--maw-dim-opacity", String(settings.dimOpacity / 100));
     if (!settings.multiSelect) clearSelection?.();
     scheduleScan?.();
+    renderAutoplay?.();
   }
+
+  // The reverse way: changes made on the page (autoplay modes) go to the bridge as
+  // a JSON operation in <html data-maw-settings-patch>:
+  //   { settings?: {key: value}, addPlaylist?: {id, title}, removePlaylist?: id }
+  // The bridge applies it to what is stored (not to our possibly stale copy), then
+  // publishes the result and answers "maw-saved" or "maw-save-failed".
+  function saveSettings(op) {
+    Object.assign(settings, op.settings);
+    const id = op.addPlaylist?.id ?? op.removePlaylist;
+    if (id) {
+      const list = settings.autoplayOffPlaylists.filter((p) => p.id !== id);
+      settings.autoplayOffPlaylists = op.addPlaylist ? [op.addPlaylist, ...list] : list;
+    }
+    apPending++;
+    document.documentElement.dataset.mawSettingsPatch = JSON.stringify(op);
+    document.dispatchEvent(new CustomEvent("maw-save-settings"));
+  }
+
+  function onSaveDone(event) {
+    apPending = Math.max(0, apPending - 1);
+    if (event.type === "maw-save-failed") toast(T.apSaveFailed);
+    if (!apPending) readSettings(); // the bridge published the stored state just before
+  }
+  document.addEventListener("maw-saved", onSaveDone);
+  document.addEventListener("maw-save-failed", onSaveDone);
 
   // ---------------------------------------------------------------- marking
 
@@ -361,6 +427,11 @@
     watchLater:
       "M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8" +
       "s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z",
+    // Material "skip_next", and the same with a slash for "autoplay off".
+    skipNext: "M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z",
+    skipNextOff: ["M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z", "M3.27 2 2 3.27 20.73 22 22 20.73z"],
+    arrowDown: "M7 10l5 5 5-5z",
+    done: "M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
   };
 
   function icon(name = "check") {
@@ -369,9 +440,11 @@
     svg.setAttribute("viewBox", "0 0 24 24");
     svg.setAttribute("class", "maw-icon");
     svg.setAttribute("aria-hidden", "true");
-    const path = document.createElementNS(NS, "path");
-    path.setAttribute("d", ICONS[name]);
-    svg.appendChild(path);
+    for (const d of [ICONS[name]].flat()) {
+      const path = document.createElementNS(NS, "path");
+      path.setAttribute("d", d);
+      svg.appendChild(path);
+    }
     return svg;
   }
 
@@ -1077,6 +1150,7 @@
 
   // ------------------------------------------------- 6. Keyboard shortcuts
   // Shift+W: mark as watched. Shift+L: save to / remove from Watch later.
+  // Shift+A: playlist autoplay on/off (section 8).
   // Target: the card under the mouse, otherwise the video on the watch page.
 
   let hoveredCard = null;
@@ -1114,8 +1188,15 @@
         return;
       }
       if (!settings.shortcuts || !event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return;
-      const key = event.code === "KeyW" ? "w" : event.code === "KeyL" ? "l" : null;
+      const key = { KeyW: "w", KeyL: "l", KeyA: "a" }[event.code];
       if (!key || event.repeat || isTyping(event)) return;
+      if (key === "a") {
+        if (!autoplayContext()) return;
+        event.preventDefault();
+        event.stopPropagation();
+        toast(T.apTip(apLabel(toggleAutoplay())));
+        return;
+      }
       const target = shortcutTarget();
       if (!target) return;
       event.preventDefault();
@@ -1265,18 +1346,360 @@
     true,
   );
 
+  // ---------------------------------------- 8. Playlist autoplay (auto-advance)
+  // <yt-playlist-manager> (hidden, in ytd-app) plays the next playlist video when
+  // the player ends, but only while its `canAutoAdvance_` flag is true. YouTube sets
+  // it back to true after every navigation (its "End of video" sleep timer turns it
+  // off the same way), so while autoplay is off we keep setting it to false: every
+  // tick, after navigation, near the end of the video and on `ended` itself (our
+  // capture listener runs before the player reports the end to the manager).
+  // YouTube's own Autoplay switch in the player does not cover playlists.
+
+  let stopAfterVideoId = null; // "Stop after this video": page-only, never stored
+  let weDisabled = false;
+  let apMenu = null;
+
+  function moviePlayer() {
+    return document.getElementById("movie_player");
+  }
+
+  function playlistManager() {
+    const el = document.querySelector("yt-playlist-manager, ytd-playlist-manager");
+    const inst = el && (el.inst ?? el.polymerController ?? el);
+    return inst && "canAutoAdvance_" in inst ? inst : null;
+  }
+
+  function textOf(value) {
+    if (typeof value === "string") return value;
+    return value?.simpleText ?? value?.content ?? value?.runs?.map((r) => r.text).join("") ?? "";
+  }
+
+  function miniplayerActive() {
+    return !!document.querySelector(
+      "ytd-miniplayer.ytdMiniplayerComponentVisible, ytd-miniplayer[active], ytd-app[miniplayer-is-active]",
+    );
+  }
+
+  // The playlist being played, on /watch or in the miniplayer; null outside playlists.
+  function autoplayContext() {
+    const data = playlistManager()?.playlistComponent?.data;
+    const player = moviePlayer();
+    const onWatch = location.pathname === "/watch";
+    if (!onWatch && !miniplayerActive()) return null;
+    const playlistId = onWatch ? new URLSearchParams(location.search).get("list") : player?.getPlaylistId?.();
+    if (!playlistId) return null;
+    // Right after navigation the player can still report the previous video.
+    const videoId = (onWatch && currentWatchVideoId()) || player?.getVideoData?.()?.video_id;
+    const title =
+      (data?.playlistId === playlistId && (textOf(data.title) || textOf(data.titleText))) ||
+      document.querySelector("ytd-playlist-panel-renderer #header-description h3 .title")?.textContent?.trim() ||
+      playlistId;
+    return { videoId, playlistId, playlistTitle: title.slice(0, 80) };
+  }
+
+  function autoplayMode(ctx = autoplayContext()) {
+    if (!ctx) return "on";
+    if (settings.autoplayAlways) return "always";
+    if ((settings.autoplayOffPlaylists || []).some((p) => p.id === ctx.playlistId)) return "playlist";
+    if (stopAfterVideoId && stopAfterVideoId === ctx.videoId) return "video";
+    return "on";
+  }
+
+  const AP_MODES = ["on", "video", "playlist", "always"];
+  const apLabel = (mode) => ({ on: T.apOn, video: T.apVideo, playlist: T.apPlaylist, always: T.apAlways })[mode];
+  const apHint = (mode) =>
+    ({ on: T.apOnHint, video: T.apVideoHint, playlist: T.apPlaylistHint, always: T.apAlwaysHint })[mode];
+
+  // Picking a mode works like a radio button: the other modes are cleared for this
+  // playlist ("Always off" leaves the per-playlist list alone, so it comes back).
+  function setAutoplayMode(mode) {
+    const ctx = autoplayContext();
+    if (!ctx || !AP_MODES.includes(mode)) return;
+    const op = { settings: { autoplayAlways: mode === "always" } };
+    if (mode !== "on") op.settings.autoplayLastOff = mode;
+    if (mode === "playlist") op.addPlaylist = { id: ctx.playlistId, title: ctx.playlistTitle };
+    else if (mode !== "always" && settings.autoplayOffPlaylists.some((p) => p.id === ctx.playlistId)) {
+      op.removePlaylist = ctx.playlistId;
+    }
+    stopAfterVideoId = mode === "video" ? ctx.videoId : null;
+    saveSettings(op);
+    enforceAutoplay();
+    renderAutoplay();
+  }
+
+  // The icon half of the split button (and Shift+A): on ↔ the last used off mode.
+  function toggleAutoplay() {
+    const mode = autoplayMode() === "on" ? settings.autoplayLastOff || "playlist" : "on";
+    setAutoplayMode(mode);
+    return mode;
+  }
+
+  function enforceAutoplay() {
+    const ctx = autoplayContext();
+    if (stopAfterVideoId && ctx?.videoId !== stopAfterVideoId) stopAfterVideoId = null;
+    const manager = playlistManager();
+    if (!manager) return;
+    if (autoplayMode(ctx) !== "on") {
+      if (manager.canAutoAdvance_) {
+        manager.canAutoAdvance_ = false;
+        weDisabled = true;
+      }
+    } else if (weDisabled) {
+      // Only undo our own change: YouTube's sleep timer may have turned it off too.
+      manager.canAutoAdvance_ = true;
+      weDisabled = false;
+    }
+  }
+
+  function playNext() {
+    const player = moviePlayer();
+    if (player?.nextVideo) player.nextVideo();
+    else document.querySelector(".ytp-next-button")?.click();
+  }
+
+  function isMainVideo(el) {
+    const player = moviePlayer();
+    return (
+      el instanceof HTMLVideoElement &&
+      !!player?.contains(el) &&
+      !player.classList.contains("ad-showing") &&
+      Number.isFinite(el.duration)
+    );
+  }
+
+  // Last video of a playlist without Loop: YouTube stops there anyway.
+  function isLastInPlaylist() {
+    const component = playlistManager()?.playlistComponent;
+    const data = component?.data;
+    if (!data?.contents || component.loopOn) return false;
+    const index = data.localCurrentIndex ?? data.currentIndex;
+    const total = data.totalVideos ?? data.contents.length;
+    return data.contents.length >= total && index + 1 >= data.contents.length;
+  }
+
+  let stoppedFor = null;
+  function notifyStopped(videoId) {
+    if (stoppedFor === videoId) return;
+    stoppedFor = videoId;
+    if (!isLastInPlaylist()) toast(T.apStopped, { label: T.apPlayNext, run: playNext });
+  }
+
+  // Media events don't bubble: listen in the capture phase on the document.
+  document.addEventListener(
+    "timeupdate",
+    (event) => {
+      const video = event.target;
+      if (!isMainVideo(video)) return;
+      const left = video.duration - video.currentTime;
+      if (left > 2) {
+        stoppedFor = null;
+        return;
+      }
+      const ctx = autoplayContext();
+      if (autoplayMode(ctx) === "on") return;
+      enforceAutoplay();
+      // Fallback if YouTube renamed the manager or its flag: stop just before the end,
+      // once (if the user presses Play again, let the video finish).
+      if (!playlistManager() && left <= 0.35 && !video.paused && stoppedFor !== ctx.videoId) {
+        video.pause();
+        notifyStopped(ctx.videoId);
+      }
+    },
+    true,
+  );
+  document.addEventListener(
+    "ended",
+    (event) => {
+      if (!isMainVideo(event.target)) return;
+      const ctx = autoplayContext();
+      if (autoplayMode(ctx) === "on") return;
+      enforceAutoplay();
+      notifyStopped(ctx.videoId);
+    },
+    true,
+  );
+
+  // ---- the split button in the playlist panel, next to Loop / Shuffle
+
+  function createAutoplayButton() {
+    const wrap = document.createElement("div");
+    wrap.className = "maw-ap";
+    wrap.setAttribute("role", "group");
+    wrap.setAttribute("aria-label", T.apTitle);
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "maw-ap-toggle";
+    toggle.addEventListener("click", () => {
+      closeAutoplayMenu();
+      toggleAutoplay();
+    });
+
+    const more = document.createElement("button");
+    more.type = "button";
+    more.className = "maw-ap-more";
+    more.title = T.apMore;
+    more.setAttribute("aria-label", T.apMore);
+    more.setAttribute("aria-haspopup", "menu");
+    more.setAttribute("aria-expanded", "false");
+    more.appendChild(icon("arrowDown"));
+    more.addEventListener("click", () => (apMenu?.anchor === wrap ? closeAutoplayMenu() : openAutoplayMenu(wrap)));
+
+    // The panel header collapses the playlist on tap: keep our clicks to ourselves.
+    for (const type of ["click", "mousedown", "mouseup", "touchstart", "touchend", "tap"]) {
+      wrap.addEventListener(type, (event) => event.stopPropagation());
+    }
+    wrap.append(toggle, more);
+    return wrap;
+  }
+
+  function ensureAutoplayButtons() {
+    if (!autoplayContext()) return;
+    for (const actions of document.querySelectorAll("ytd-playlist-panel-renderer #start-actions")) {
+      if (actions.querySelector(":scope > .maw-ap")) continue;
+      const menu = actions.querySelector(":scope > #playlist-action-menu");
+      actions.insertBefore(createAutoplayButton(), menu ? menu.nextSibling : actions.firstChild);
+    }
+    renderAutoplay();
+  }
+
+  function renderAutoplay() {
+    const mode = autoplayMode();
+    const tip = T.apTip(apLabel(mode)) + (settings.shortcuts ? " (Shift+A)" : "");
+    for (const wrap of document.querySelectorAll(".maw-ap")) {
+      wrap.classList.toggle("maw-ap-off", mode !== "on");
+      const toggle = wrap.querySelector(".maw-ap-toggle");
+      if (toggle.dataset.mode !== mode) {
+        toggle.dataset.mode = mode;
+        toggle.replaceChildren(icon(mode === "on" ? "skipNext" : "skipNextOff"));
+      }
+      toggle.setAttribute("aria-pressed", String(mode !== "on"));
+      toggle.title = tip;
+      toggle.setAttribute("aria-label", tip);
+    }
+    if (apMenu) renderAutoplayMenu();
+  }
+
+  function renderAutoplayMenu() {
+    const mode = autoplayMode();
+    for (const item of apMenu.el.querySelectorAll(".maw-ap-item")) {
+      const on = item.dataset.mode === mode;
+      item.setAttribute("aria-checked", String(on));
+      item.classList.toggle("maw-ap-checked", on);
+    }
+  }
+
+  function openAutoplayMenu(anchor) {
+    closeAutoplayMenu();
+    const el = document.createElement("div");
+    el.className = "maw-ap-menu";
+    el.setAttribute("role", "menu");
+    el.setAttribute("aria-label", T.apTitle);
+    const title = document.createElement("div");
+    title.className = "maw-ap-menu-title";
+    title.textContent = T.apTitle;
+    el.appendChild(title);
+    for (const mode of AP_MODES) {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "maw-ap-item";
+      item.dataset.mode = mode;
+      item.setAttribute("role", "menuitemradio");
+      const check = document.createElement("span");
+      check.className = "maw-ap-check";
+      check.appendChild(icon("done"));
+      const text = document.createElement("span");
+      text.className = "maw-ap-text";
+      const label = document.createElement("span");
+      label.className = "maw-ap-label";
+      label.textContent = apLabel(mode);
+      const hint = document.createElement("span");
+      hint.className = "maw-ap-hint";
+      hint.textContent = apHint(mode);
+      text.append(label, hint);
+      item.append(check, text);
+      item.addEventListener("click", () => {
+        setAutoplayMode(mode);
+        closeAutoplayMenu();
+      });
+      el.appendChild(item);
+    }
+    document.body.appendChild(el);
+    apMenu = { el, anchor };
+    anchor.querySelector(".maw-ap-more")?.setAttribute("aria-expanded", "true");
+    renderAutoplayMenu();
+
+    const rect = anchor.getBoundingClientRect();
+    const width = el.offsetWidth;
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+    const below = rect.bottom + 4 + el.offsetHeight <= window.innerHeight;
+    el.style.left = `${left}px`;
+    el.style.top = `${below ? rect.bottom + 4 : Math.max(8, rect.top - 4 - el.offsetHeight)}px`;
+    el.querySelector(".maw-ap-checked")?.focus();
+  }
+
+  function closeAutoplayMenu() {
+    if (!apMenu) return;
+    apMenu.anchor.querySelector(".maw-ap-more")?.setAttribute("aria-expanded", "false");
+    apMenu.el.remove();
+    apMenu = null;
+  }
+
+  document.addEventListener(
+    "mousedown",
+    (event) => {
+      if (!apMenu) return;
+      const path = event.composedPath();
+      if (!path.includes(apMenu.el) && !path.includes(apMenu.anchor)) closeAutoplayMenu();
+    },
+    true,
+  );
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (!apMenu) return;
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        closeAutoplayMenu();
+      } else if ((event.key === "ArrowDown" || event.key === "ArrowUp") && apMenu.el.contains(document.activeElement)) {
+        const items = [...apMenu.el.querySelectorAll(".maw-ap-item")];
+        const i = items.indexOf(document.activeElement);
+        const step = event.key === "ArrowDown" ? 1 : items.length - 1;
+        const next = items[i < 0 ? (step === 1 ? 0 : items.length - 1) : (i + step) % items.length];
+        event.preventDefault();
+        event.stopPropagation();
+        next?.focus();
+      }
+    },
+    true,
+  );
+  window.addEventListener("resize", closeAutoplayMenu);
+  document.addEventListener(
+    "scroll",
+    (event) => {
+      if (apMenu && !apMenu.el.contains(event.target)) closeAutoplayMenu();
+    },
+    true,
+  );
+
   // ------------------------------------------------------------------ wiring
 
   function tick() {
     ensureWatchButton();
     ensureTrashButtons();
     scanCards();
+    ensureAutoplayButtons();
+    enforceAutoplay();
   }
 
   document.addEventListener("maw-settings", readSettings);
+  document.addEventListener("yt-navigate-start", closeAutoplayMenu);
   document.addEventListener("yt-navigate-finish", () => {
     clearSelection();
     tick();
+    // YouTube's playlist manager re-enables auto-advance on this same event.
+    setTimeout(enforceAutoplay, 0);
+    setTimeout(enforceAutoplay, 500);
     refreshWatchLater(5 * 60_000);
   });
   document.addEventListener("visibilitychange", () => {
